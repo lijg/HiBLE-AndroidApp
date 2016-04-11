@@ -1,0 +1,32 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="io.yile.hible.MainActivity">
+
+    <group
+        android:id="@+id/menu_group_open" >
+        <item
+            android:id="@+id/menu_open"
+            android:orderInCategory="100"
+            android:title="@string/menu_open"
+            app:showAsAction="never" />
+    </group>
+    <group
+        android:id="@+id/menu_group_list" >
+        <item
+            android:id="@+id/menu_scan"
+            android:orderInCategory="100"
+            android:title="@string/menu_scan"
+            app:showAsAction="never" />
+        <item
+            android:id="@+id/menu_stop"
+            android:orderInCategory="200"
+            android:title="@string/menu_stop"
+            app:showAsAction="never" />
+        <item
+            android:id="@+id/menu_refresh"
+            android:orderInCategory="300"
+            android:title="@string/menu_refresh"
+            app:showAsAction="never" />
+    </group>
+</menu>

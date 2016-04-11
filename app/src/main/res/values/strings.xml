@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">HiBLE</string>
+    <string name="menu_open">OPEN BLE</string>
+    <string name="menu_scan">SCAN</string>
+    <string name="menu_stop">STOP</string>
+    <string name="menu_refresh">REFRESH</string>
+    <string name="bluetooth_not_supported">Bluetooth is not supported.</string>
+    <string name="ble_not_supported">BLE is not supported.</string>
+    <string name="unknown_device">Unknow device</string>
+
+    <string name="connected">Connected</string>
+    <string name="disconnected">Disconnected</string>
+    <string name="no_data">No Data</string>
+
+    <string name="turn_on">ON</string>
+    <string name="turn_off">OFF</string>
+    <string name="action_connect">Connect</string>
+    <string name="action_disconnect">Disconnect</string>
+    <string name="please_connect">Please Connect to a Device</string>
+    <string name="error_msg">Communication Failed.</string>
+
+</resources>
