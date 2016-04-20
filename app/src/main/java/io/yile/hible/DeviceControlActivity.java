@@ -163,7 +163,7 @@ public class DeviceControlActivity extends AppCompatActivity {
         mActionOnOff.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mSWState) {
+                if (mWriteState && mSWState) {
                     if (write(false)) {
                         mImageBulb.setImageDrawable(ContextCompat.getDrawable(DeviceControlActivity.this, R.drawable.bulb_off));
                         mActionOnOff.setText(getString(R.string.turn_on));
