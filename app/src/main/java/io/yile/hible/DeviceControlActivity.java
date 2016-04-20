@@ -1,5 +1,6 @@
 package io.yile.hible;
 
+import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -41,7 +42,9 @@ public class DeviceControlActivity extends AppCompatActivity {
     private BluetoothGattService mHiBLEService;
     private BluetoothGattCharacteristic mHiBLESWChar;
     private boolean mSWState;
-    private boolean mWriteState;
+    private boolean mWriteState, mReadState;
+    private boolean mConnecting;
+    private ProgressDialog mProgressDialog;
 
     /*
      * 连接蓝牙设备成功后，会调用此Callback
@@ -68,12 +71,13 @@ public class DeviceControlActivity extends AppCompatActivity {
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             // 此时才可以访问设备支持的服务与特性
             mConnectState = true;
+            mConnecting = false;
             Handler handler = new Handler(Looper.getMainLooper());
             handler.post(new Runnable() {
                 @Override
                 public void run() {
                     mActionConnect.setText(getString(R.string.action_disconnect));
-                    mActionOnOff.setVisibility(View.VISIBLE);
+                    mProgressDialog.dismiss();
                 }
             });
 
@@ -90,12 +94,37 @@ public class DeviceControlActivity extends AppCompatActivity {
                 Log.e(TAG, "Cannot get Characteristic: " + DeviceProfile.UUID_HIBLE_SW_CHAR);
                 return;
             }
+
+            readCharacteristic(mHiBLESWChar);
         }
 
         @Override
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             // 写完成
             mWriteState = true;
+        }
+
+        @Override
+        public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            mReadState = true;
+            final byte ret = characteristic.getValue()[0];
+            Handler handler = new Handler(Looper.getMainLooper());
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    mActionOnOff.setVisibility(View.VISIBLE);
+                    mProgressDialog.dismiss();
+                    if(ret == 1) {
+                        mImageBulb.setImageDrawable(ContextCompat.getDrawable(DeviceControlActivity.this, R.drawable.bulb_on));
+                        mActionOnOff.setText(getString(R.string.turn_off));
+                        mSWState = true;
+                    } else {
+                        mImageBulb.setImageDrawable(ContextCompat.getDrawable(DeviceControlActivity.this, R.drawable.bulb_off));
+                        mActionOnOff.setText(getString(R.string.turn_on));
+                        mSWState = false;
+                    }
+                }
+            });
         }
     };
 
@@ -127,35 +156,45 @@ public class DeviceControlActivity extends AppCompatActivity {
         mHiBLESWChar = null;
         mSWState = false;
         mWriteState = true;
+        mReadState = true;
+        mConnecting = false;
+
+        mProgressDialog = new ProgressDialog(this);
+        mProgressDialog.setTitle("Connecting");
+        mProgressDialog.setMessage("Wait while connecting...");
 
         mActionConnect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (!mConnectState) {
+                if (!mConnecting) {
+                    if (!mConnectState) {
                     /*
                      * 启动连接
                      */
-                    Handler handler = new Handler(Looper.getMainLooper());
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (getDeviceByAddress(mDeviceAddress) != null) {
-                                mBluetoothGatt = getDeviceByAddress(mDeviceAddress).connectGatt(getApplicationContext(), true, mGattCallback);
+                        Handler handler = new Handler(Looper.getMainLooper());
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (getDeviceByAddress(mDeviceAddress) != null) {
+                                    mBluetoothGatt = getDeviceByAddress(mDeviceAddress).connectGatt(getApplicationContext(), true, mGattCallback);
+                                    mConnecting = true;
+                                    mProgressDialog.show();
+                                }
                             }
-                        }
-                    });
-                } else {
-                    Handler handler = new Handler(Looper.getMainLooper());
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (mBluetoothGatt != null) {
-                                disconnect();
-                                mActionConnect.setText(getApplicationContext().getString(R.string.action_connect));
-                                mActionOnOff.setVisibility(View.INVISIBLE);
+                        });
+                    } else {
+                        Handler handler = new Handler(Looper.getMainLooper());
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (mBluetoothGatt != null) {
+                                    disconnect();
+                                    mActionConnect.setText(getApplicationContext().getString(R.string.action_connect));
+                                    mActionOnOff.setVisibility(View.INVISIBLE);
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
                 }
             }
         });
@@ -168,7 +207,7 @@ public class DeviceControlActivity extends AppCompatActivity {
                         mImageBulb.setImageDrawable(ContextCompat.getDrawable(DeviceControlActivity.this, R.drawable.bulb_off));
                         mActionOnOff.setText(getString(R.string.turn_on));
                     }
-                } else {
+                } else if(mWriteState) {
                     if (write(true)) {
                         mImageBulb.setImageDrawable(ContextCompat.getDrawable(DeviceControlActivity.this, R.drawable.bulb_on));
                         mActionOnOff.setText(getString(R.string.turn_off));
@@ -221,6 +260,21 @@ public class DeviceControlActivity extends AppCompatActivity {
 
         boolean ret = mBluetoothGatt.writeCharacteristic(characteristic);
         mWriteState = false;
+        return ret;
+    }
+
+    public boolean readCharacteristic(BluetoothGattCharacteristic characteristic) {
+        if (mConnectState == false || mHiBLEService == null || mHiBLESWChar == null || mBluetoothGatt == null || mReadState == false) {
+            return false;
+        }
+
+        // Check characteristic property
+        final int properties = characteristic.getProperties();
+        if ((properties & BluetoothGattCharacteristic.PROPERTY_READ) == 0)
+            return false;
+
+        boolean ret = mBluetoothGatt.readCharacteristic(characteristic);
+        mReadState = false;
         return ret;
     }
 
