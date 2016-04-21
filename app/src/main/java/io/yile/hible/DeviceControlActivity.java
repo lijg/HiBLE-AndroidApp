@@ -114,14 +114,14 @@ public class DeviceControlActivity extends AppCompatActivity {
                 public void run() {
                     mActionOnOff.setVisibility(View.VISIBLE);
                     mProgressDialog.dismiss();
-                    if(ret == 1) {
-                        mImageBulb.setImageDrawable(ContextCompat.getDrawable(DeviceControlActivity.this, R.drawable.bulb_on));
-                        mActionOnOff.setText(getString(R.string.turn_off));
-                        mSWState = true;
-                    } else {
+                    if(ret == 0) {
                         mImageBulb.setImageDrawable(ContextCompat.getDrawable(DeviceControlActivity.this, R.drawable.bulb_off));
                         mActionOnOff.setText(getString(R.string.turn_on));
                         mSWState = false;
+                    } else {
+                        mImageBulb.setImageDrawable(ContextCompat.getDrawable(DeviceControlActivity.this, R.drawable.bulb_on));
+                        mActionOnOff.setText(getString(R.string.turn_off));
+                        mSWState = true;
                     }
                 }
             });
